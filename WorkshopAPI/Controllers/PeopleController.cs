@@ -24,14 +24,12 @@ namespace WorkshopAPI.Controllers
             _validatorService = validatorService;
         }
 
-        // GET: api/People
         [HttpGet]
         public async Task<ActionResult<IEnumerable<People>>> GetPeople()
         {
             return await _context.People.ToListAsync();
         }
 
-        // GET: api/People/5
         [HttpGet("{id}")]
         public async Task<ActionResult<People>> GetPeople(int id)
         {
@@ -45,8 +43,6 @@ namespace WorkshopAPI.Controllers
             return people;
         }
 
-        // PUT: api/People/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         public async Task<IActionResult> PutPeople(int id, People people)
         {
@@ -77,21 +73,22 @@ namespace WorkshopAPI.Controllers
         }
 
         // POST: api/People
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<People>> PostPeople(People person)
         {
-            //_context.People.Add(people);
-            //await _context.SaveChangesAsync();
 
-            //return CreatedAtAction("GetPeople", new { id = people.Id }, people);
             string content = JsonSerializer.Serialize(person);
-            var isValid = await _validatorService.ValidateContentAsync(content, "application/json");
+            var response = await _validatorService.ValidateContentAsync(content, "application/json");
 
-            if (!isValid.Valid)
-                return BadRequest("Invalid content");
+            if (!response.Valid)
+            {
+                return BadRequest(new
+                {
+                    Message = "Content validation failed",
+                    Errors = response.Errors  // ← Lista de errores detallados
+                });
+            }
 
-            // 2. Si es válido, guardar en DB
             _context.People.Add(person);
             await _context.SaveChangesAsync();
 

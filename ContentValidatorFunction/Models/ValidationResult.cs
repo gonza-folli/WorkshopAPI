@@ -1,4 +1,4 @@
-﻿namespace WorkshopAPI.Models
+﻿namespace ContentValidatorFunction.Models
 {
     public class ValidationResult
     {

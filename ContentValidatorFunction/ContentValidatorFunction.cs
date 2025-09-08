@@ -1,12 +1,10 @@
+using ContentValidatorFunction.Models;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Text.Json;
-using WorkshopAPI.EF;
-using WorkshopAPI.Models;
 
 namespace ContentValidatorFunction
 {
@@ -27,8 +25,6 @@ namespace ContentValidatorFunction
 
             try
             {
-                //var requestBody = await req.ReadAsStringAsync();
-                //var validationRequest = JsonSerializer.Deserialize<ValidationRequest>(requestBody);
 
                 var validationRequest = await req.ReadFromJsonAsync<ValidationRequest>();
 

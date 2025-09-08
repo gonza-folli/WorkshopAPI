@@ -20,11 +20,11 @@
   <!--<ItemGroup>
     <ProjectReference Include="..\WorkshopAPI\WorkshopAPI.csproj" />
   </ItemGroup>-->
-  <ItemGroup>
+  <!--<ItemGroup>
     <Reference Include="WorkshopAPI">
       <HintPath>..\WorkshopAPI\obj\Release\net8.0\ref\WorkshopAPI.dll</HintPath>
     </Reference>
-  </ItemGroup>
+  </ItemGroup>-->
   <ItemGroup>
     <None Update="host.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
