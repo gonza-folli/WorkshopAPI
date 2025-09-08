@@ -1,3 +1,4 @@
+using Azure.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
 using WorkshopAPI.EF;
@@ -6,14 +7,24 @@ using WorkshopAPI.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Azure Key Vault
+var keyVaultUrl = builder.Configuration["KeyVault:Url"];
+if (!string.IsNullOrEmpty(keyVaultUrl))
+{
+    builder.Configuration.AddAzureKeyVault(
+        new Uri(keyVaultUrl),
+        new DefaultAzureCredential());
+}
+
 if (builder.Environment.IsDevelopment())
 {
     builder.Configuration.AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true);
 }
 
+
 builder.Services.AddDbContext<MiDBContext>(options =>
 {
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    var connectionString = builder.Configuration.GetConnectionString("DbConnectionString");
     options.UseSqlServer(connectionString, sqlOptions =>
     {
         sqlOptions.EnableRetryOnFailure(
@@ -27,30 +38,32 @@ builder.Services.AddDbContext<MiDBContext>(options =>
 // Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-
 builder.Services.AddScoped<IContentValidatorService, ContentValidatorService>();
 
-// Configuración del HttpClient para la función de validación
+
 builder.Services.AddHttpClient("ValidatorFunction", client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["ValidatorFunction:Url"]);
-    client.DefaultRequestHeaders.Add("x-functions-key",
-        builder.Configuration["ValidatorFunction:ApiKey"]);
+    // En desarrollo: usa appsettings.Development.json, sino Key Vault
+    var functionUrl = builder.Environment.IsDevelopment()
+        ? builder.Configuration["ValidatorFunction:Url"]  // Desarrollo local
+        : builder.Configuration["ValidatorFunctionUrl"];  // Key Vault
+
+    var functionApiKey = builder.Environment.IsDevelopment()
+        ? builder.Configuration["ValidatorFunction:ApiKey"]  // Desarrollo local  
+        : builder.Configuration["ValidatorFunctionKey"];     // Key Vault
+
+    client.BaseAddress = new Uri(functionUrl);
+    client.DefaultRequestHeaders.Add("x-functions-key", functionApiKey);
+    client.Timeout = TimeSpan.FromSeconds(30);
 });
+
 
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-//if (app.Environment.IsDevelopment())
-//{
-//    app.UseSwagger();
-//    app.UseSwaggerUI();
-//}
 
 app.UseSwagger();
 app.UseSwaggerUI(options =>
