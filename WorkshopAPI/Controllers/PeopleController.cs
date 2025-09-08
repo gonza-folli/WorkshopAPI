@@ -1,11 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
 using WorkshopAPI.EF;
+using WorkshopAPI.Interfaces;
 
 namespace WorkshopAPI.Controllers
 {
@@ -14,10 +16,12 @@ namespace WorkshopAPI.Controllers
     public class PeopleController : ControllerBase
     {
         private readonly MiDBContext _context;
+        private readonly IContentValidatorService _validatorService;
 
-        public PeopleController(MiDBContext context)
+        public PeopleController(MiDBContext context, IContentValidatorService validatorService)
         {
             _context = context;
+            _validatorService = validatorService;
         }
 
         // GET: api/People
@@ -75,12 +79,23 @@ namespace WorkshopAPI.Controllers
         // POST: api/People
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<People>> PostPeople(People people)
+        public async Task<ActionResult<People>> PostPeople(People person)
         {
-            _context.People.Add(people);
+            //_context.People.Add(people);
+            //await _context.SaveChangesAsync();
+
+            //return CreatedAtAction("GetPeople", new { id = people.Id }, people);
+            string content = JsonSerializer.Serialize(person);
+            var isValid = await _validatorService.ValidateContentAsync(content, "application/json");
+
+            if (!isValid.Valid)
+                return BadRequest("Invalid content");
+
+            // 2. Si es válido, guardar en DB
+            _context.People.Add(person);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetPeople", new { id = people.Id }, people);
+            return Ok(person);
         }
 
         // DELETE: api/People/5

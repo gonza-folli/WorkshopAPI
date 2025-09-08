@@ -1,8 +1,15 @@
 using Microsoft.EntityFrameworkCore;
 using System;
 using WorkshopAPI.EF;
+using WorkshopAPI.FunctionClasses;
+using WorkshopAPI.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
+
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddJsonFile("appsettings.Development.json", optional: true, reloadOnChange: true);
+}
 
 builder.Services.AddDbContext<MiDBContext>(options =>
 {
@@ -24,14 +31,33 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+
+builder.Services.AddScoped<IContentValidatorService, ContentValidatorService>();
+
+// Configuración del HttpClient para la función de validación
+builder.Services.AddHttpClient("ValidatorFunction", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["ValidatorFunction:Url"]);
+    client.DefaultRequestHeaders.Add("x-functions-key",
+        builder.Configuration["ValidatorFunction:ApiKey"]);
+});
+
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+//if (app.Environment.IsDevelopment())
+//{
+//    app.UseSwagger();
+//    app.UseSwaggerUI();
+//}
+
+app.UseSwagger();
+app.UseSwaggerUI(options =>
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
+    options.RoutePrefix = string.Empty;
+});
 
 app.UseHttpsRedirection();
 
